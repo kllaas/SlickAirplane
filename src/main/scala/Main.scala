@@ -22,7 +22,8 @@ object Main {
   def main(args: Array[String]): Unit = {
     //    init()
     //    databaseFill()
-    task63()
+    //    task63()
+    task67()
   }
 
   def init(): Unit = {
@@ -80,11 +81,27 @@ object Main {
   def task63() = {
     val query = (PassInTripTable.table join PassengerTable.table on (_.idPsg === _.idPsg))
       .groupBy { case (passInTrip, passengers) => (passInTrip.place, passengers.name) }
-      .map { case (place, group) => (place._2,group.length, place._1)}
-      .filter( a => a._2 > 1)
-      .map ( a => a._1 -> a._3)
+      .map { case (place, group) => (place._2, group.length, place._1) }
+      .filter(a => a._2 > 1)
+      .map(a => a._1 -> a._3)
 
     print(Await.result(db.run(query.result), Duration.Inf))
+  }
+
+  def task67() = {
+    val query = TripTable.table.map(trip => (trip.town_from, trip.town_to))
+      .groupBy(trip => (trip._1, trip._2))
+      .map { tuple => tuple._1 -> tuple._2.length }
+
+    val routes = Await.result(db.run(query.result), Duration.Inf)
+
+    var maxFlights = 0
+
+    for (route <- routes) {
+      maxFlights = Math.max(maxFlights, route._2)
+    }
+
+    routes.filter(_._2 == maxFlights).foreach(println)
   }
 
 }
