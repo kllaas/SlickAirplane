@@ -4,9 +4,8 @@ import java.util.Date
 
 import data.HardCoredRepository
 import entity._
-import slick.collection.heterogeneous.Nat._5
 
-import scala.concurrent.Await
+import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
 import slick.jdbc.PostgresProfile.api._
 
@@ -21,15 +20,16 @@ object Main {
   val passengersRepository = new PassengerRepository(db)
 
   def main(args: Array[String]): Unit = {
-    init()
-    databaseFill()
+    //    init()
+    //    databaseFill()
+    task63()
   }
 
   def init(): Unit = {
     Await.result(db.run(CompanyTable.table.schema.create), Duration.Inf)
     Await.result(db.run(TripTable.table.schema.create), Duration.Inf)
-    Await.result(db.run(PassInTripTable.table.schema.create), Duration.Inf)
     Await.result(db.run(PassengerTable.table.schema.create), Duration.Inf)
+    Await.result(db.run(PassInTripTable.table.schema.create), Duration.Inf)
   }
 
   case class Test(a: Int, b: Int, c: String, d: Int)
@@ -62,6 +62,9 @@ object Main {
       Await.result(tripRepository.create(trip), Duration.Inf)
     }
 
+    for (passData <- passengers) {
+      Await.result(passengersRepository.create(Passenger.tupled(passData)), Duration.Inf)
+    }
 
     for (passData <- passInTrip) {
 
@@ -71,9 +74,17 @@ object Main {
       Await.result(passInTripRepository.create(passInTrip), Duration.Inf)
     }
 
-
-    for (passData <- passengers) {
-      Await.result(passengersRepository.create(Passenger.tupled(passData)), Duration.Inf)
-    }
   }
+
+
+  def task63() = {
+    val query = (PassInTripTable.table join PassengerTable.table on (_.idPsg === _.idPsg))
+      .groupBy { case (passInTrip, passengers) => (passInTrip.place, passengers.name) }
+      .map { case (place, group) => (place._2,group.length, place._1)}
+      .filter( a => a._2 > 1)
+      .map ( a => a._1 -> a._3)
+
+    print(Await.result(db.run(query.result), Duration.Inf))
+  }
+
 }

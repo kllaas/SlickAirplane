@@ -8,7 +8,7 @@ import scala.concurrent.Future
 case class Company(id: Int, name: String)
 
 class CompanyTable(tag: Tag) extends Table[Company](tag, "companies") {
-  val id = column[Int]("id", O.PrimaryKey, O.AutoInc)
+  val id = column[Int]("id", O.PrimaryKey)
   val name = column[String]("name")
 
   def * = (id, name) <> (Company.apply _ tupled, Company.unapply)
