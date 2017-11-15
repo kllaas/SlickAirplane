@@ -17,6 +17,9 @@ object Main {
     "jdbc:postgresql://127.0.0.1/airport?user=alex&password=alex"
   )
 
+  val dateFormat = new SimpleDateFormat("yyyyMMdd hh:mm:ss.SSS")
+
+
   val companiesRepository = new CompanyRepository(db)
   val tripRepository = new TripRepository(db)
   val passInTripRepository = new PassInTripRepository(db)
@@ -30,8 +33,9 @@ object Main {
     //    task72
     //    task77
     //    task79
-//    task84
-    task87
+    //    task84
+    //    task87
+    task66
   }
 
   def init(): Unit = {
@@ -52,9 +56,6 @@ object Main {
     val trips = HardCoredRepository.trips
     val passInTrip = HardCoredRepository.pass_in_trip
     val passengers = HardCoredRepository.passengers
-
-    val dateFormat = new SimpleDateFormat("yyyyMMdd hh:mm:ss.SSS")
-
 
     for (companyData <- companies) {
       Await.result(companiesRepository.create(Company.tupled(companyData)), Duration.Inf)
@@ -225,7 +226,6 @@ object Main {
   }
 
 
-
   /*
     Considering that a passenger lives in his first flight departure town,
     find those passengers among dwellers of other cities who visited Moscow more than once.
@@ -236,8 +236,8 @@ object Main {
       .groupBy {
         joinedTables => (joinedTables._2.name, joinedTables._1._1.town_from, joinedTables._1._1.town_to, joinedTables._1._2.date)
       }.map {
-        groupedByName => (groupedByName._1._1, groupedByName._1._2, groupedByName._1._3,  groupedByName._1._4)
-      }
+      groupedByName => (groupedByName._1._1, groupedByName._1._2, groupedByName._1._3, groupedByName._1._4)
+    }
 
     val result = Await.result(db.run(query.result), Duration.Inf)
     val res = result.groupBy(x => x._1)
@@ -261,8 +261,27 @@ object Main {
       maxToMoscowTrips = Math.max(maxToMoscowTrips, moscowTripCount(v))
     }
 
-    res.map( tuple => tuple._2.sortBy( param => param._4.getTime) )
+    res.map(tuple => tuple._2.sortBy(param => param._4.getTime))
       .filter(list => moscowTripCount(list) == maxToMoscowTrips)
-      .foreach( res => println(res))
+      .foreach(res => println(res(0)._1 + ", " + res.size))
+  }
+
+  def task66() = {
+    val dateFormat = new SimpleDateFormat("yyyy-MM-dd")
+
+    val query = (TripTable.table join PassInTripTable.table on (_.trip_no === _.tripNo) join PassengerTable.table on (_._2.idPsg === _.idPsg))
+      .groupBy {
+        joinedTables => (joinedTables._2.name, joinedTables._1._1.town_from, joinedTables._1._2.date)
+      }.map {
+      groupedByName => (groupedByName._1._1, groupedByName._1._2, groupedByName._1._3)
+    }
+
+    val result = Await.result(db.run(query.result), Duration.Inf)
+
+    result.filter { x =>
+      x._2 == "Rostov" &&
+        x._3.getTime > dateFormat.parse("2003-04-01").getTime &&
+        x._3.getTime < dateFormat.parse("2003-04-07").getTime
+    }.foreach(println)
   }
 }
