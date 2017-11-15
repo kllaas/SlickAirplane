@@ -30,7 +30,8 @@ object Main {
     //    task72
     //    task77
     //    task79
-    task84
+//    task84
+    task87
   }
 
   def init(): Unit = {
@@ -223,4 +224,45 @@ object Main {
 
   }
 
+
+
+  /*
+    Considering that a passenger lives in his first flight departure town,
+    find those passengers among dwellers of other cities who visited Moscow more than once.
+    Result set: passenger's name, number of visits to Moscow.
+    */
+  def task87 = {
+    val query = (TripTable.table join PassInTripTable.table on (_.trip_no === _.tripNo) join PassengerTable.table on (_._2.idPsg === _.idPsg))
+      .groupBy {
+        joinedTables => (joinedTables._2.name, joinedTables._1._1.town_from, joinedTables._1._1.town_to, joinedTables._1._2.date)
+      }.map {
+        groupedByName => (groupedByName._1._1, groupedByName._1._2, groupedByName._1._3,  groupedByName._1._4)
+      }
+
+    val result = Await.result(db.run(query.result), Duration.Inf)
+    val res = result.groupBy(x => x._1)
+
+    def moscowTripCount(list: Seq[(String, String, String, Timestamp)]): Int = {
+      if (list.length <= 1) return 0
+
+      var moscowVisits = 0
+
+      for (i <- 1 until list.length) {
+        if (list(i)._3 == "Moscow" || list(i)._2 == "Moscow")
+          moscowVisits += 1
+      }
+
+      moscowVisits
+    }
+
+    var maxToMoscowTrips = 0
+
+    for ((k, v) <- res) {
+      maxToMoscowTrips = Math.max(maxToMoscowTrips, moscowTripCount(v))
+    }
+
+    res.map( tuple => tuple._2.sortBy( param => param._4.getTime) )
+      .filter(list => moscowTripCount(list) == maxToMoscowTrips)
+      .foreach( res => println(res))
+  }
 }
