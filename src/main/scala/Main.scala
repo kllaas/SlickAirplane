@@ -36,7 +36,8 @@ object Main {
     //    task84
     //    task87
     //    task66
-    task124
+//    task124
+    task102
   }
 
   def init(): Unit = {
@@ -181,6 +182,8 @@ object Main {
   }
 
 
+
+
   /*
       Find the names of the different passengers,
       which flew only by the same route (there and back or in the one direction).
@@ -222,8 +225,32 @@ object Main {
       .foreach(x => println(x._1))
   }
 
-  def task110 = {
 
+  def task102() = {
+
+    val query = (TripTable.table join PassInTripTable.table on (_.trip_no === _.tripNo) join PassengerTable.table on (_._2.idPsg === _.idPsg))
+      .map {
+        joinedTables => (joinedTables._1._1.town_to, joinedTables._1._1.town_from, joinedTables._2.name)
+      }
+
+    var result = Await.result(db.run(query.result), Duration.Inf)
+
+    result = result
+      .map { case (town_to, town_from, id) =>
+        if (town_to.compareTo(town_from) > 0) (town_to, town_from, id)
+        else (town_from, town_to, id)
+      }
+
+    val group = result
+      .groupBy {
+        case (town_to, town_from, id) => id
+      }.map {
+      case (id, trips) => (id, trips.map(_._1).toSet)
+    }.filter {
+      _._2.size == 1
+    }.keys
+
+    print(group)
   }
 
 
@@ -319,4 +346,5 @@ object Main {
       .filter { case (id, group) => group.length > 1 && group.distinct.length == 1 }
       .keys.foreach(println)
   }
+
 }
