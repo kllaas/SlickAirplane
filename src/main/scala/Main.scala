@@ -36,9 +36,10 @@ object Main {
     //    task84
     //    task87
     //    task66
-//    task124
-//    task102
-    test133
+    //    task124
+    //    task102
+    //    test133
+    test131
   }
 
   def init(): Unit = {
@@ -181,8 +182,6 @@ object Main {
         println(x.head.asInstanceOf[String] + ": " + (x(2).asInstanceOf[Long] - x(1).asInstanceOf[Long]) / 1000 / 60)
     }
   }
-
-
 
 
   /*
@@ -339,11 +338,13 @@ object Main {
       .groupBy {
         joinedTables => (joinedTables._2.idPsg, joinedTables._2.name, joinedTables._1._1.id_comp)
       }.map {
-        case (pass, group) => (pass._1, pass._2, group.length)
-      }
+      case (pass, group) => (pass._1, pass._2, group.length)
+    }
 
     val result = Await.result(db.run(query.result), Duration.Inf)
-      result.groupBy {_._2}
+    result.groupBy {
+      _._2
+    }
       .filter { case (id, group) => group.length > 1 && group.distinct.length == 1 }
       .keys.foreach(println)
   }
@@ -365,7 +366,28 @@ object Main {
 
     val companyIds = Await.result(db.run(query), Duration.Inf)
 
-    companyIds.foreach( id => println(createHill(id)) )
+    companyIds.foreach(id => println(createHill(id)))
+  }
+
+  def test131() = {
+    val allowedChars = mutable.HashSet('a', 'e', 'i', 'o', 'u')
+    val townsFrom = TripTable.table.map(_.town_from).distinct
+    val townsTo = TripTable.table.map(_.town_to).distinct
+
+    val query = townsFrom.union(townsTo).distinct.result
+
+    val towns = Await.result(db.run(query), Duration.Inf)
+
+    val result = towns.
+      map(name => (name, name.filter(allowedChars.contains))).
+      filter { x =>
+        x._2.length >= 2 &&
+          x._2.length == x._2.toSet.size
+      }.map {
+      _._1
+    }
+
+    result.foreach(println)
   }
 
 }
