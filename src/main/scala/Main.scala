@@ -35,8 +35,8 @@ object Main {
     //    task79
     //    task84
     //    task87
-//    task66
-    task114
+    //    task66
+    task124
   }
 
   def init(): Unit = {
@@ -295,14 +295,28 @@ object Main {
       .groupBy {
         joinedTables => (joinedTables._2.name, joinedTables._1.place)
       }.map {
-        groupedByName => (groupedByName._1._1, groupedByName._2.length)
-      }.filter {
-        x => x._2 > 1
-      }
+      groupedByName => (groupedByName._1._1, groupedByName._2.length)
+    }.filter {
+      x => x._2 > 1
+    }
 
     val result = Await.result(db.run(query.result), Duration.Inf)
     val max = result.maxBy((x) => x._2)._2
 
     result.filter(x => x._2 == max).foreach(println)
+  }
+
+  def task124() = {
+    val query = (TripTable.table join PassInTripTable.table on (_.trip_no === _.tripNo) join PassengerTable.table on (_._2.idPsg === _.idPsg))
+      .groupBy {
+        joinedTables => (joinedTables._2.idPsg, joinedTables._2.name, joinedTables._1._1.id_comp)
+      }.map {
+        case (pass, group) => (pass._1, pass._2, group.length)
+      }
+
+    val result = Await.result(db.run(query.result), Duration.Inf)
+      result.groupBy {_._2}
+      .filter { case (id, group) => group.length > 1 && group.distinct.length == 1 }
+      .keys.foreach(println)
   }
 }
