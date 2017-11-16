@@ -35,7 +35,8 @@ object Main {
     //    task79
     //    task84
     //    task87
-    task66
+//    task66
+    task114
   }
 
   def init(): Unit = {
@@ -283,5 +284,25 @@ object Main {
         x._3.getTime > dateFormat.parse("2003-04-01").getTime &&
         x._3.getTime < dateFormat.parse("2003-04-07").getTime
     }.foreach(println)
+  }
+
+  /*
+  Find the names of the different passengers, which flew more often than others in the same seat.
+  Output: name and quantity of the flights in the same seat.
+  */
+  def task114() = {
+    val query = (PassInTripTable.table join PassengerTable.table on (_.idPsg === _.idPsg))
+      .groupBy {
+        joinedTables => (joinedTables._2.name, joinedTables._1.place)
+      }.map {
+        groupedByName => (groupedByName._1._1, groupedByName._2.length)
+      }.filter {
+        x => x._2 > 1
+      }
+
+    val result = Await.result(db.run(query.result), Duration.Inf)
+    val max = result.maxBy((x) => x._2)._2
+
+    result.filter(x => x._2 == max).foreach(println)
   }
 }
