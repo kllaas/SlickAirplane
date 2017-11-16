@@ -1,12 +1,10 @@
 import java.sql.Timestamp
 import java.text.SimpleDateFormat
 import java.util
-import java.util.Date
-
 import data.HardCoredRepository
 import entity._
 
-import scala.concurrent.{Await, Future}
+import scala.concurrent.{Await}
 import scala.concurrent.duration._
 import slick.jdbc.PostgresProfile.api._
 
@@ -28,18 +26,19 @@ object Main {
   def main(args: Array[String]): Unit = {
     //        init()
     //        databaseFill()
-    //    task63()
-    //    task67()
-    //    task72
-    //    task77
-    //    task79
-    //    task84
-    //    task87
-    //    task66
-    //    task124
-    //    task102
-    //    test133
-    test131
+//    task63
+//    task66
+//    task67
+//    task72
+//    task77
+    task79
+//    task84
+//    task87
+//    task102
+//    task114
+//    task124
+//    test131
+//    task133
   }
 
   def init(): Unit = {
@@ -48,12 +47,6 @@ object Main {
     Await.result(db.run(PassengerTable.table.schema.create), Duration.Inf)
     Await.result(db.run(PassInTripTable.table.schema.create), Duration.Inf)
   }
-
-  case class Test(a: Int, b: Int, c: String, d: Int)
-
-  val tuple: (Int, Int, String, Int) = (1, 2, "a", 3)
-
-  Test.tupled(tuple) // works
 
   def databaseFill(): Unit = {
     val companies = HardCoredRepository.companies
@@ -177,18 +170,11 @@ object Main {
       x =>
         val currDiff = x(2).asInstanceOf[Long] - x(1).asInstanceOf[Long]
         currDiff == max
-    }.foreach {
-      x =>
-        println(x.head.asInstanceOf[String] + ": " + (x(2).asInstanceOf[Long] - x(1).asInstanceOf[Long]) / 1000 / 60)
-    }
+    }.distinct.map {
+      x => (x.head.asInstanceOf[String], (x(2).asInstanceOf[Long] - x(1).asInstanceOf[Long]) / 1000 / 60)
+    }.distinct.foreach(println)
   }
 
-
-  /*
-      Find the names of the different passengers,
-      which flew only by the same route (there and back or in the one direction).
-
-  */
   def task84() = {
     val query = (TripTable.table join PassInTripTable.table on (_.trip_no === _.tripNo) join PassengerTable.table on (_._2.idPsg === _.idPsg))
       .groupBy {
@@ -253,12 +239,6 @@ object Main {
     print(group)
   }
 
-
-  /*
-    Considering that a passenger lives in his first flight departure town,
-    find those passengers among dwellers of other cities who visited Moscow more than once.
-    Result set: passenger's name, number of visits to Moscow.
-    */
   def task87 = {
     val query = (TripTable.table join PassInTripTable.table on (_.trip_no === _.tripNo) join PassengerTable.table on (_._2.idPsg === _.idPsg))
       .groupBy {
@@ -313,19 +293,15 @@ object Main {
     }.foreach(println)
   }
 
-  /*
-  Find the names of the different passengers, which flew more often than others in the same seat.
-  Output: name and quantity of the flights in the same seat.
-  */
   def task114() = {
     val query = (PassInTripTable.table join PassengerTable.table on (_.idPsg === _.idPsg))
       .groupBy {
         joinedTables => (joinedTables._2.name, joinedTables._1.place)
       }.map {
-      groupedByName => (groupedByName._1._1, groupedByName._2.length)
-    }.filter {
-      x => x._2 > 1
-    }
+        groupedByName => (groupedByName._1._1, groupedByName._2.length)
+      }.filter {
+        x => x._2 > 1
+      }
 
     val result = Await.result(db.run(query.result), Duration.Inf)
     val max = result.maxBy((x) => x._2)._2
@@ -338,18 +314,18 @@ object Main {
       .groupBy {
         joinedTables => (joinedTables._2.idPsg, joinedTables._2.name, joinedTables._1._1.id_comp)
       }.map {
-      case (pass, group) => (pass._1, pass._2, group.length)
-    }
+        case (pass, group) => (pass._1, pass._2, group.length)
+      }
 
     val result = Await.result(db.run(query.result), Duration.Inf)
     result.groupBy {
-      _._2
-    }
-      .filter { case (id, group) => group.length > 1 && group.distinct.length == 1 }
-      .keys.foreach(println)
+        _._2
+      }.filter {
+        case (id, group) => group.length > 1 && group.distinct.length == 1
+      }.keys.foreach(println)
   }
 
-  def test133() = {
+  def task133() = {
     def createHill(n: Int): String = {
       val sb = new StringBuilder
 
@@ -384,8 +360,8 @@ object Main {
         x._2.length >= 2 &&
           x._2.length == x._2.toSet.size
       }.map {
-      _._1
-    }
+        _._1
+      }
 
     result.foreach(println)
   }
