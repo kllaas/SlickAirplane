@@ -37,7 +37,8 @@ object Main {
     //    task87
     //    task66
 //    task124
-    task102
+//    task102
+    test133
   }
 
   def init(): Unit = {
@@ -345,6 +346,26 @@ object Main {
       result.groupBy {_._2}
       .filter { case (id, group) => group.length > 1 && group.distinct.length == 1 }
       .keys.foreach(println)
+  }
+
+  def test133() = {
+    def createHill(n: Int): String = {
+      val sb = new StringBuilder
+
+      for (i <- 1 to n)
+        sb.append(i)
+
+      for (i <- n - 1 to 1 by -1)
+        sb.append(i)
+
+      sb.toString
+    }
+
+    val query = CompanyTable.table.map(_.id).result
+
+    val companyIds = Await.result(db.run(query), Duration.Inf)
+
+    companyIds.foreach( id => println(createHill(id)) )
   }
 
 }
